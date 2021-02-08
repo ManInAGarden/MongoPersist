@@ -1,6 +1,8 @@
 .vscode/*
+.vscode
 __pycache__/*
 _pycache_/*
+_pycache_
 utconfig.json
 .vscode/settings.json
 *.pyc
