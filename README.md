@@ -6,7 +6,9 @@ Framework to persist data from python classes to am mongodb documemt database
 
 Just import MpFactory, instatiate an MpFactory like this
 
-    fact = MpFactory(url, "mptest")
+    import mongopersist as mp
+
+    fact = mp.MpFactory(url, "mptest")
 
 Here mptest is the name of a mongodb database and url is a stringng filled with the URL for the db connection to a 
 mongodb.
@@ -15,7 +17,7 @@ Now its all abour having designed the data in python classes with the dataclass 
 
 
     @dataclass(init=false)
-    class MpPerson():
+    class MpPerson(mp.MpBase):
         _id : str = None
         firstname : str = None
         lastname : str = None
@@ -25,7 +27,7 @@ Now its all abour having designed the data in python classes with the dataclass 
 
 With that definition we can create a person now.
 
-    pers = MpMyPerson(MpBase)
+    pers = MpMyPerson()
     pers.firstname = "John"
     pers.lastname = "Nobody"
     pers.street = "123 Times Square"
@@ -50,4 +52,6 @@ Now we can use the factory to find that person later on
 
     plater = fact.find_one(MpMyPerson, {"firstname":"John"})
 
-Off course that only does work because there's only on person called John in the collection now. Mybe you notices the fields "_id", "created" and "lastupdate". They are defined in MpBase class from which MpMyPerson is derived. Youll find it in MpHandyClasses along with a more sophisticated version of a person class (MpPerson) and other nice classes.
+Off course that only does work because there's only on person called John in the collection now. Mybe you notices the fields "_id", "created" and "lastupdate". They are defined in mp.MpBase class from which MpMyPerson is derived. 
+
+You'll find am more sophistiacated version of a person class in MpHandyClasses along witheverything you need for simple catalogs line in titles (PhD. Prof. etc).
