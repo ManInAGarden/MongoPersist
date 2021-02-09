@@ -1,4 +1,4 @@
-from MPFactory import *
+import mongopersist as mp
 from MPHandyClasses import *
 
 class DataMocker():

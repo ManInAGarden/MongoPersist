@@ -1,7 +1,6 @@
-from MpDecorators import MpListResolve, MpResolve, MpSingleResolve
+from .MpDecorators import MpListResolve, MpResolve, MpSingleResolve
 import typing
-from MpBase import MpBase, Noneable, NoneableDateTime
-from MPHandyClasses import SimpleCatalogue
+from .MpBase import MpBase, Noneable, NoneableDateTime, SimpleCatalogue
 from uuid import uuid4
 from bson import codec_options
 import pymongo as pym
@@ -11,7 +10,7 @@ import datetime as dt
 import importlib
 from dataclasses import dataclass, is_dataclass
 
-class MPFactory():
+class MpFactory():
     def __init__(self, url, subname):
         self._seeds_done=[]
         self.mongoclient = pym.MongoClient(url)
@@ -300,9 +299,14 @@ class MPFactory():
 
 
     def getclass(self, clsname):
-        parts = clsname.split(".")
-        module = importlib.import_module(parts[0])
-        return getattr(module, parts[1])
+        if clsname is None or len(clsname)==0:
+            raise Exception("MpDactory.getclass(classname) for an emty classname is not a valid call")
+
+        lastdot = clsname.rindex('.')
+        modulename = clsname[0:lastdot]
+        clsname = clsname[lastdot + 1::]
+        module = importlib.import_module(modulename)
+        return getattr(module, clsname)
 
     def find(self, cls, filterdict):
         colname = cls.CollectionName()

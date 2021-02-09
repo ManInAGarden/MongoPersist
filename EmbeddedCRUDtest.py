@@ -1,6 +1,6 @@
 from DataMocker import DataMocker
 import unittest
-import MPFactory as mpf
+import mongopersist as mp
 from MPHandyClasses import *
 from TestBase import *
 

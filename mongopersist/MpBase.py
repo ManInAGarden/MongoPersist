@@ -36,3 +36,17 @@ class MpBase():
             override this class Method in your class if you need a collection name not equal to the class name
         """
         return cls.__name__
+
+@dataclass(init=False)
+class SimpleCatalogue(MpBase):
+    languagecode : str = None
+    code : str = None
+    value : str = None
+
+    def CatInit(self, lcode, code, val):
+        self._id = None
+        self.languagecode = lcode
+        self.code = code
+        self.value = val
+
+        return self

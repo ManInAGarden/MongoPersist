@@ -1,17 +1,17 @@
 import unittest
-import MPFactory as mpf
+import mongopersist as mp
 from MPHandyClasses import *
 import json
 
 class TestBase(unittest.TestCase):
     
-    Mpf : mpf.MPFactory = None #the persitence factory
+    Mpf : mp.MpFactory = None #the persitence factory
 
     @classmethod
     def setUpClass(cls):
         cls.readini("utconfig.json")
         url = cls.getsetting("testurl")
-        fact = mpf.MPFactory(url, "MPTest")
+        fact = mp.MpFactory(url, "MPTest")
         fact.lang = "DEU"
         fact.initseeddata(MrMsCat)
         fact.initseeddata(GenderCat)

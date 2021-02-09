@@ -2,26 +2,11 @@ from types import LambdaType
 import pymongo as pym
 from bson.objectid import ObjectId
 from dataclasses import dataclass, field
-from MpDecorators import *
-from MpBase import *
 from typing import *
-
-
-@dataclass(init=False)
-class SimpleCatalogue(MpBase):
-    languagecode : str = None
-    code : str = None
-    value : str = None
-
-    def CatInit(self, lcode, code, val):
-        self._id = None
-        self.languagecode = lcode
-        self.code = code
-        self.value = val
-        return self
+import mongopersist as mp
 
 @dataclass(init=False)
-class MrMsCat(SimpleCatalogue):
+class MrMsCat(mp.SimpleCatalogue):
     @classmethod
     def GetSeedData(cls):
         catseed = [MrMsCat().CatInit("DEU", "MR", "Herr"),
@@ -31,7 +16,7 @@ class MrMsCat(SimpleCatalogue):
         return catseed
 
 @dataclass(init=False)
-class GenderCat(SimpleCatalogue):
+class GenderCat(mp.SimpleCatalogue):
     @classmethod
     def GetSeedData(cls):
         catseed = [GenderCat().CatInit("DEU", "MALE", "männlich"),
@@ -41,7 +26,7 @@ class GenderCat(SimpleCatalogue):
         return catseed
 
 @dataclass(init=False)
-class TitleCat(SimpleCatalogue):
+class TitleCat(mp.SimpleCatalogue):
     @classmethod
     def GetSeedData(cls):
         catseed = [TitleCat().CatInit("DEU", "DR", "Dr."),
@@ -64,7 +49,7 @@ class MpAddress(): # has no id because it is always embedded
     co : str = None
     
 @dataclass(init=False)
-class MpPerson(MpBase):
+class MpPerson(mp.MpBase):
     firstname : str = None
     lastname : str = None
     gender : GenderCat = None
@@ -83,17 +68,17 @@ class MpCompanyContact(MpPerson):
     companyid : str = None
 
 @dataclass(init=False)
-class MpCompany(MpBase):
+class MpCompany(mp.MpBase):
     name : str = None
     bossid : str = None
     boss : MpCompanyContact = field(default=None,
-                              metadata=MpSingleResolve.Map(localFieldName="bossid",
+                              metadata=mp.MpSingleResolve.Map(localFieldName="bossid",
                                 foreignFieldName="_id",
                                 autofill=False,
                                 othercls=MpCompanyContact))
     address : MpAddress = None
     contacts : List[MpCompanyContact] = field(default=None, 
-                                        metadata=MpListResolve.Map(localFieldName="_id",
+                                        metadata=mp.MpListResolve.Map(localFieldName="_id",
                                             foreignFieldName="companyid",
                                             autofill=False,
                                             othercls=MpCompanyContact))

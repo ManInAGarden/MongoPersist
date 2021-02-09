@@ -1,5 +1,4 @@
-from types import LambdaType
-from MpBase import MpBase
+from .MpBase import MpBase
 
 from typing import Dict,List
 

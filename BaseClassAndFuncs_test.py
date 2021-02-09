@@ -1,32 +1,33 @@
 from MPHandyClasses import MpCompany, MpCompanyContact, MpPerson
+import mongopersist as mp
 from TestBase import TestBase
 import unittest
-from MpBase import *
 import dataclasses as dc
+import datetime as dt
 
 class BaseClassTest(TestBase):
     def setUp(self):
         pass
 
     def test_NonableDateTime(self):
-        dtn = NoneableDateTime(None)
+        dtn = mp.NoneableDateTime(None)
 
         self.assertFalse(dtn.hasvalue())
         self.assertIsNone(dtn.value)
 
         tstt = dt.datetime.now()
-        dtn = NoneableDateTime(tstt)
+        dtn = mp.NoneableDateTime(tstt)
         self.assertTrue(dtn.hasvalue())
         self.assertEqual(tstt, dtn.value)
 
-        dtn = NoneableDateTime(True)
+        dtn = mp.NoneableDateTime(True)
 
     def test_NullableBool(self):
-        bn = NoneableBool(None)
+        bn = mp.NoneableBool(None)
         self.assertFalse(bn.hasvalue())
         self.assertIsNone(bn.value)
         
-        bn = NoneableBool(True)
+        bn = mp.NoneableBool(True)
         self.assertTrue(bn.hasvalue())
         self.assertTrue(bn.value)
 
