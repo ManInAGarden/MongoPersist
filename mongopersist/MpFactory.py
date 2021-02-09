@@ -308,10 +308,25 @@ class MpFactory():
         module = importlib.import_module(modulename)
         return getattr(module, clsname)
 
-    def find(self, cls, filterdict):
+    def find(self, cls, findpar = None, limit=0):
+        if findpar is None:
+            return self.find_with_dict(cls, {}, limit)
+        elif type(findpar) is dict:
+            return self.find_with_dict(cls, findpar, limit)
+        elif issubclass(type(findpar), MpBase):
+            if findpar._id is None:
+                raise Exception("MpFactory.find() with an Mpbase derived instance only works when this instance contains an _id")
+
+            return self.find_with_dict(cls, {"_id": findpar._id})
+        elif findpar is str:
+            return self.find_with_dict(cls, {"_id": findpar})
+        else:
+            raise NotImplementedError("Unsupported type <{}> in findpar.".format(type(findpar)))
+
+    def find_with_dict(self, cls, filterdict : dict, limit=0):
         colname = cls.CollectionName()
         col = self.db.get_collection(colname)
-        dcodict = col.find(filterdict)
+        dcodict = col.find(filterdict, limit = limit)
 
         answ = []
         for element in dcodict:
