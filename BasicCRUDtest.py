@@ -88,6 +88,37 @@ class BasicMPCRUDTests(TestBase):
         self.assertEqual(p1.gender.code, "FEMALE")
         self.assertTrue("Aquarium" in p1.labels)
 
+    def test_delete(self):
+        fn = "Bin"
+        ln = "Gar nicht da"
+        p1 = self.mocker.createperson(firstname=fn, lastname=ln)
+        self.Mpf.flush(p1)
+
+        p1r = self.Mpf.findbyid(MpPerson, p1._id)
+        self.assertIsNotNone(p1r)
+
+        self.Mpf.delete(p1)
+        p1r = self.Mpf.findbyid(MpPerson, p1._id)
+        self.assertIsNone(p1r)
+
+    def test_delete_many(self):
+        fn = "Bin"
+        ln = "Gar nicht da"
+        p1 = self.mocker.createperson(firstname=fn, lastname=ln)
+        self.Mpf.flush(p1)
+        p2 = self.mocker.createperson(firstname=fn, lastname=ln, mrms=self.Mpf.cat(MrMsCat,"MR"))
+        self.Mpf.flush(p2)
+        
+        p1r = self.Mpf.findbyid(MpPerson, p1._id)
+        p2r = self.Mpf.findbyid(MpPerson, p2._id)
+        self.assertIsNotNone(p1r)
+        self.assertIsNotNone(p2r)
+
+        res = self.Mpf.delete_many(MpPerson, {"firstname": fn, "lastname":ln})
+        p1r = self.Mpf.findbyid(MpPerson, p1._id)
+        p2r = self.Mpf.findbyid(MpPerson, p2._id)
+        self.assertIsNone(p1r)
+        self.assertIsNone(p2r)
 
 if __name__ == '__main__':
     unittest.main()

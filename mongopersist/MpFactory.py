@@ -47,7 +47,7 @@ class MpFactory():
         dcodict = self.getmongodict(dco)
 
         t = type(dco)
-        colname = dco.__class__.__name__
+        colname = dco.__class__.CollectionName()
         col = self.db.get_collection(colname)
 
         if dcodict["_id"] is None:
@@ -169,10 +169,13 @@ class MpFactory():
 
 
     def findbyid(self, cls, id):
+        dco = None
         colname = cls.CollectionName()
         col = self.db.get_collection(colname)
         dcodict = col.find_one({"_id": id})
-        dco = self.createinstance(cls, dcodict)
+        
+        if dcodict is not None:
+            dco = self.createinstance(cls, dcodict)
 
         return dco
 
@@ -329,19 +332,21 @@ class MpFactory():
         dcodict = col.find(filterdict, limit = limit)
 
         answ = []
-        for element in dcodict:
-            dco = self.createinstance(cls, element)
-            answ.append(dco)
-            
+        if dcodict is not None:
+            for element in dcodict:
+                dco = self.createinstance(cls, element)
+                answ.append(dco)
+                
         return answ
 
     def find_one(self, cls, filterdict):
+        answ = None
         colname = cls.CollectionName()
         col = self.db.get_collection(colname)
         dcodict = col.find_one(filterdict)
 
-        answ = self.createinstance(cls, dcodict)
-            
+        if dcodict is not None:
+            answ = self.createinstance(cls, dcodict)
         return answ
 
     def delete(self, dco):
@@ -351,6 +356,11 @@ class MpFactory():
         delres = col.delete_one({"_id" : dco._id})
 
         if delres.deleted_count != 1: raise BaseException("Es wurde nicht exakt ein Dokument gelöscht für Löschen mit _id <" + str(dco._id) + ">")
+
+    def delete_many(self, cls, filter):
+        colname = cls.CollectionName()
+        col = self.db.get_collection(colname)
+        return col.delete_many(filter)
 
     def cat(self, cls, code):
         cachekey = cls.__name__ + "#" + code
