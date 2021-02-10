@@ -1,6 +1,6 @@
-from .MpDecorators import MpListResolve, MpResolve, MpSingleResolve
+from .MpDecorators import MpIntersectResolve, MpListResolve, MpResolve, MpSingleResolve
 import typing
-from .MpBase import MpBase, Noneable, NoneableDateTime, SimpleCatalogue
+from .MpBaseClasses import MpBase, SimpleCatalogue
 from uuid import uuid4
 from bson import codec_options
 import pymongo as pym
@@ -8,7 +8,7 @@ import dataclasses as dc
 from pymongo.message import update
 import datetime as dt
 import importlib
-from dataclasses import dataclass, is_dataclass
+from dataclasses import is_dataclass
 
 class MpFactory():
     def __init__(self, url, subname):
@@ -36,7 +36,7 @@ class MpFactory():
     def flush(self, dco):
         if not dc.is_dataclass(dco) : raise BaseException("Keine Datenklasse in Flush!")
 
-        ts = NoneableDateTime(dt.datetime.now())
+        ts = dt.datetime.now()
         if dco._id is None:
             dco.created = ts
             dco.lastupdate = ts
@@ -92,13 +92,6 @@ class MpFactory():
                         pass
                     else:
                         answdict[fn] = val #we have a non dataclass embedded here.
-
-                elif issubclass(field.type, Noneable):
-                    if val is None:
-                        answdict[fn] = None
-                    else:
-                        answdict[fn] = {"###MPNONEABLE###" : field.type.__module__ + "." + field.type.__name__,
-                            "value" : val.value}
                 else:
                     answdict[fn] = val
 
@@ -190,10 +183,6 @@ class MpFactory():
                 elif "###MPCATCLASS###" in value.keys(): #wir haben es mit einem Katalogverweis zu tun
                     subcls = self.getclass(value["###MPCATCLASS###"])
                     setattr(dco, name, self.cat(subcls, value["code"]))
-                elif "###MPNONEABLE###" in value.keys(): #Wir haben einen Noneable typen
-                    subcls = self.getclass(value["###MPNONEABLE###"])
-                    nullo = subcls(value["value"])
-                    setattr(dco, name, nullo)
                 else: #wir haben ein normales dict
                     setattr(dco, name, value)
             else:
@@ -262,9 +251,20 @@ class MpFactory():
         return self.find(mpres.otherclass, filter)
 
     def singleresolve(self, dco : MpBase, field : dc.Field) -> MpBase:
-        mpres : MpListResolve = field.metadata[MpResolve.MapName]
+        mpres : MpSingleResolve = field.metadata[MpResolve.MapName]
         filter = mpres.getfilter(dco)
         return self.find_one(mpres.otherclass, filter)
+
+    def intersectresolve(self, dco : MpBase, field : dc.Field) -> typing.List[MpBase]:
+        mpres : MpIntersectResolve = field.metadata[MpResolve.MapName]
+        filter = mpres.getfilter(dco)
+        inters = self.find(mpres.interclass, filter)
+
+        answ = []
+        for inter in inters:
+            answ.append(self.find_one(mpres.otherclass, mpres.getsubfilter(dco, inter)))
+
+        return answ
 
     def resolve(self, dco, *args):
         """ resolve embedded lists and single embedded objects
@@ -283,14 +283,18 @@ class MpFactory():
             if fld is None:
                 raise Exception("<{}> exisitiert nicht als Feld in <{}>".format(arg, dco.__class__.__name__))
 
+            # no double fetches for linked data - important for testing and performance
+            if hasattr(dco, fld.name) and getattr(dco, fld.name) is not None:
+                return
+
             mpres = fld.metadata[MpResolve.MapName]
 
             if issubclass(type(mpres), MpListResolve):
-                if not hasattr(dco, fld.name) or getattr(dco, fld.name) is None:
-                    setattr(dco, fld.name, self.listresolve(dco, fld))
+                setattr(dco, fld.name, self.listresolve(dco, fld))
             elif issubclass(type(mpres), MpSingleResolve):
-                if not hasattr(dco, fld.name) or getattr(dco, fld.name) is None:
-                    setattr(dco, fld.name, self.singleresolve(dco, fld))
+                setattr(dco, fld.name, self.singleresolve(dco, fld))
+            elif issubclass(type(mpres), MpIntersectResolve):
+                setattr(dco, fld.name, self.intersectresolve(dco, fld))
 
     def getfield(self, fields, fieldname):
         for field in fields:

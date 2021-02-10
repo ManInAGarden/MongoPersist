@@ -3,6 +3,7 @@ import pymongo as pym
 from bson.objectid import ObjectId
 from dataclasses import dataclass, field
 from typing import *
+from datetime import datetime
 import mongopersist as mp
 
 @dataclass(init=False)
@@ -82,6 +83,32 @@ class MpCompany(mp.MpBase):
                                             foreignFieldName="companyid",
                                             autofill=False,
                                             othercls=MpCompanyContact))
+
+@dataclass(init=False)
+class MpBigCompany2Contact(mp.MpIntersectBase):
+    """itersection class to connect MpBigCompany objects
+       to MpContact
+    """
+
+    position : str = None
+    employmentstart : datetime = None
+    employmentend : datetime = None
+
+
+@dataclass(init=False)
+class MpBigCompany(mp.MpIntersectBase):
+    """ a more sophisticated version of the company
+    """
+
+    name : str = None
+    phone : str = None
+    establishedsince : datetime = None
+    isactive : bool = None
+    address : MpAddress = None
+    employees : List[MpPerson] = field(default=None,
+                                    metadata=mp.MpIntersectResolve.Map(othercls=MpPerson, 
+                                            intercls=MpBigCompany2Contact))
+
 
 
 

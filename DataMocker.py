@@ -92,3 +92,27 @@ class DataMocker():
         self._mpf.flush(cc3)
         
         return comp
+
+    def createbigcompany(self, name : str ="Noname SE", establishedsince : datetime = None) -> MpBigCompany:
+        bc = MpBigCompany()
+        bc.name = name
+        bc.establishedsince = establishedsince
+        bc.isactive = True
+        self._mpf.flush(bc)
+        
+        return bc
+
+    def addbigemployee(self, bigc, firstname="Billy", lastname="Looser", position="worker", empstart=None) -> MpPerson:
+        p = MpPerson()
+        p.firstname = firstname
+        p.lastname = lastname
+        self._mpf.flush(p)
+
+        cip = MpBigCompany2Contact()
+        cip.position = position
+        cip.parentid = bigc._id
+        cip.targetid = p._id
+        cip.employmentstart = empstart
+        self._mpf.flush(cip)
+
+        return p

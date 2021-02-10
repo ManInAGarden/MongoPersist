@@ -9,27 +9,6 @@ class BaseClassTest(TestBase):
     def setUp(self):
         pass
 
-    def test_NonableDateTime(self):
-        dtn = mp.NoneableDateTime(None)
-
-        self.assertFalse(dtn.hasvalue())
-        self.assertIsNone(dtn.value)
-
-        tstt = dt.datetime.now()
-        dtn = mp.NoneableDateTime(tstt)
-        self.assertTrue(dtn.hasvalue())
-        self.assertEqual(tstt, dtn.value)
-
-        dtn = mp.NoneableDateTime(True)
-
-    def test_NullableBool(self):
-        bn = mp.NoneableBool(None)
-        self.assertFalse(bn.hasvalue())
-        self.assertIsNone(bn.value)
-        
-        bn = mp.NoneableBool(True)
-        self.assertTrue(bn.hasvalue())
-        self.assertTrue(bn.value)
 
     def test_createinstance(self):
         dcodict = {"firstname" : "Total",

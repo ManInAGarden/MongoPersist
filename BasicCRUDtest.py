@@ -16,7 +16,7 @@ class BasicMPCRUDTests(TestBase):
 
     def test_insert(self):
         p1 = self.mocker.createperson(firstname="Ingo", 
-            lastname="Zanperoni", 
+            lastname="Zamperoni", 
             gender=self.Mpf.cat(GenderCat,"MALE"),
             mrms=self.Mpf.cat(MrMsCat,"MR"),
             title=self.Mpf.cat(TitleCat, "PHD"))

@@ -7,8 +7,9 @@ from TestBase import *
 class EmbeddedCRUDtest(TestBase):
     def setUp(self):
         self.mocker = DataMocker(self.Mpf)
-        self.Mpf.db.drop_collection("MpCompany")
-        self.Mpf.db.drop_collection("MpCompanyContact")
+        self.Mpf.db.drop_collection(MpCompany.CollectionName())
+        self.Mpf.db.drop_collection(MpCompanyContact.CollectionName())
+        self.Mpf.db.drop_collection(MpBigCompany.CollectionName())
         super().setUp()
 
     def test_list_resolve(self):
@@ -75,6 +76,17 @@ class EmbeddedCRUDtest(TestBase):
         comprr = self.Mpf.findbyid(MpCompany, compr._id)
         self.assertIsNone(comprr.boss)
         self.assertIsNone(comprr.contacts)
+
+    def test_bigcompany(self):
+        bc = MpBigCompany()
+        bc.name = "Big Company Selling Shit We Do Not Need SE"
+        bc.isactive = True
+        bc.foundationdate = datetime(1880, 7, 15)
+        self.Mpf.flush(bc)
+
+        bcr = self.Mpf.findbyid(MpBigCompany, bc._id)
+        self.assertIsNotNone(bcr)
+        self.assertEqual(bc.name, bcr.name)
 
 
 if __name__ == '__main__':
