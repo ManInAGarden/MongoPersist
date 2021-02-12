@@ -32,6 +32,7 @@ class IntersectTest(TestBase):
             self.assertIn(emp.firstname, empfirst)
             self.assertIn(emp.lastname, emplast)
 
+
 if __name__ == '__main__':
     unittest.main()
 

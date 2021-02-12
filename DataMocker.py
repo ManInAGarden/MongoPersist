@@ -19,6 +19,8 @@ class DataMocker():
         answ.mrms = mrms
         answ.title = title
 
+        self._mpf.flush(answ)
+
         return answ
 
     def createaddress(self,
@@ -47,7 +49,8 @@ class DataMocker():
             addr = address
 
         comp.address = addr
-
+        self._mpf.flush(comp)
+        
         return comp
 
     def createcompanycontact(self, comp : MpCompany, mrms : MrMsCat=None, firstname:str = "Servus", lastname : str="Sklave", jobtitle: str="Subalterner") -> MpCompanyContact:
