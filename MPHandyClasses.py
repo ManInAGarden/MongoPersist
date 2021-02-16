@@ -1,116 +1,41 @@
-from types import LambdaType
-import pymongo as pym
-from bson.objectid import ObjectId
-from dataclasses import dataclass, field
-from typing import *
-from datetime import datetime
 import mongopersist as mp
 
-@dataclass(init=False)
-class MrMsCat(mp.SimpleCatalogue):
-    @classmethod
-    def GetSeedData(cls):
-        catseed = [MrMsCat().CatInit("DEU", "MR", "Herr"),
-            	MrMsCat().CatInit("DEU", "MRS", "Frau"),
-                MrMsCat().CatInit("GBR", "MR", "Mr."),
-                MrMsCat().CatInit("GBR", "MRS", "Mrs.")]
-        return catseed
+class TitleCat(mp.MpCatalog):
+    _cattype = "TITLE"
 
-@dataclass(init=False)
-class GenderCat(mp.SimpleCatalogue):
-    @classmethod
-    def GetSeedData(cls):
-        catseed = [GenderCat().CatInit("DEU", "MALE", "männlich"),
-                GenderCat().CatInit("DEU", "FEMALE", "weiblich"),
-                GenderCat().CatInit("GBR", "MALE", "male"),
-                GenderCat().CatInit("GBR", "FEMALE", "female")]
-        return catseed
+class GenderCat(mp.MpCatalog):
+    _cattype = "GENDER"
 
-@dataclass(init=False)
-class TitleCat(mp.SimpleCatalogue):
-    @classmethod
-    def GetSeedData(cls):
-        catseed = [TitleCat().CatInit("DEU", "DR", "Dr."),
-                TitleCat().CatInit("DEU", "PHD", "PhD"),
-                TitleCat().CatInit("DEU", "PROF", "Prof."),
-                TitleCat().CatInit("GBR", "DR", "Prof."),
-                TitleCat().CatInit("GBR", "PHD", "PhD"),
-                TitleCat().CatInit("GBR", "PROF", "Dr.")]
-        return catseed
+class MrMsCat(mp.MpCatalog):
+    _cattype = "MRMS"
 
+class MpAddress(mp.MpBase):
+    Zip = mp.String()
+    City = mp.String()
+    StreetAddress = mp.String()
+    Co = mp.String()
 
-        
-
-@dataclass(init=False)
-class MpAddress(): # has no id because it is always embedded
-    zip : str = None
-    city : str = None
-    streetaddress : str = None
-    country : str = None
-    co : str = None
-    
-@dataclass(init=False)
 class MpPerson(mp.MpBase):
-    firstname : str = None
-    lastname : str = None
-    gender : GenderCat = None
-    mrms : MrMsCat = None
-    title : TitleCat = None
-    address : MpAddress = None
-    email : str = None
-    homephone : str = None
-    mobilephone : str = None
-    labels : List[str] = None
+    Firstname = mp.String()
+    Lastname = mp.String()
+    Birthday = mp.DateTime()
+    Gender = mp.Catalog(catalogtype=GenderCat)
+    Mrms = mp.Catalog(catalogtype=MrMsCat)
+    Title = mp.Catalog(catalogtype=TitleCat)
+    Address = mp.EmbeddedObject(targettype=MpAddress)
+    Email = mp.String()
+    Homephone = mp.String()
+    Mobilephone = mp.String()
+    Labels = mp.EmbeddedList(targettype=str)
 
-@dataclass(init=False)
-class MpCompanyContact(MpPerson):
-    jobtitle : str = None
-    compphone : str = None
-    companyid : str = None
+class MpEmployee(mp.MpBase):
+    Jobtitle = mp.String()
+    EmployeeNumber = mp.Int()
+    Companyid = mp.String()
+    Personid = mp.String()
+    Person = mp.JoinedEmbeddedObject(targettype=MpPerson, localid=Personid, autofill=True)
 
-@dataclass(init=False)
 class MpCompany(mp.MpBase):
-    name : str = None
-    bossid : str = None
-    boss : MpCompanyContact = field(default=None,
-                              metadata=mp.MpSingleResolve.Map(localFieldName="bossid",
-                                foreignFieldName="_id",
-                                autofill=False,
-                                othercls=MpCompanyContact))
-    address : MpAddress = None
-    contacts : List[MpCompanyContact] = field(default=None, 
-                                        metadata=mp.MpListResolve.Map(localFieldName="_id",
-                                            foreignFieldName="companyid",
-                                            autofill=False,
-                                            othercls=MpCompanyContact))
-
-@dataclass(init=False)
-class MpBigCompany2Contact(mp.MpIntersectBase):
-    """itersection class to connect MpBigCompany objects
-       to MpContact
-    """
-
-    position : str = None
-    employmentstart : datetime = None
-    employmentend : datetime = None
-
-
-@dataclass(init=False)
-class MpBigCompany(mp.MpIntersectBase):
-    """ a more sophisticated version of the company
-    """
-
-    name : str = None
-    phone : str = None
-    establishedsince : datetime = None
-    isactive : bool = None
-    address : MpAddress = None
-    employees : List[MpPerson] = field(default=None,
-                                    metadata=mp.MpIntersectResolve.Map(othercls=MpPerson, 
-                                            intercls=MpBigCompany2Contact))
-
-
-
-
-
-
+    Name = mp.String()
+    Address = mp.EmbeddedObject(targettype=MpAddress)
+    Employees = mp.JoinedEmbeddedList(targettype=MpEmployee, foreignid=MpEmployee.Companyid, cascadedelete=True) #no autofill here for performance

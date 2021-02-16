@@ -1,0 +1,21 @@
+{ "MpHandyClasses.TitleCat" : [
+        {"type":"TITLE", "langcode": "DEU", "code" : "PHD", "value": "PhD"},
+        {"type":"TITLE", "langcode": "GBR", "code" : "PHD", "value": "PhD"},
+        {"type":"TITLE", "langcode": "DEU", "code" : "DR", "value": "Dr."},
+        {"type":"TITLE", "langcode": "GBR", "code" : "DR", "value": "Dr."},
+        {"type":"TITLE", "langcode": "DEU", "code" : "PROF", "value": "Prof."},
+        {"type":"TITLE", "langcode": "GBR", "code" : "PROF", "value": "Prof."}
+    ],
+    "MpHandyClasses.GenderCat" : [
+        {"type":"GENDER", "langcode": "DEU", "code" : "MALE", "value": "männlich"},
+        {"type":"GENDER", "langcode": "GBR", "code" : "MALE", "value": "male"},
+        {"type":"GENDER", "langcode": "DEU", "code" : "FEMALE", "value": "weiblich"},
+        {"type":"GENDER", "langcode": "GBR", "code" : "FEMALE", "value": "female"}
+    ],
+    "MpHandyClasses.MrMsCat" : [
+        {"type":"MRMS", "langcode": "DEU", "code" : "MR", "value": "Herr"},
+        {"type":"MRMS", "langcode": "GBR", "code" : "MR", "value": "Mr."},
+        {"type":"MRMS", "langcode": "DEU", "code" : "MRS", "value": "Frau"},
+        {"type":"MRMS", "langcode": "GBR", "code" : "MRS", "value": "Mrs."}
+    ]
+}

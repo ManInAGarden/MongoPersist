@@ -1,11 +1,13 @@
 import unittest
 import mongopersist as mp
-from MPHandyClasses import *
+from MpHandyClasses import *
+import MockerParts as mocking
 import json
 
 class TestBase(unittest.TestCase):
     
     Mpf : mp.MpFactory = None #the persitence factory
+    Mck : mocking.Mocker = None
 
     @classmethod
     def setUpClass(cls):
@@ -13,9 +15,9 @@ class TestBase(unittest.TestCase):
         url = cls.getsetting("testurl")
         fact = mp.MpFactory(url, "MPTest")
         fact.lang = "DEU"
-        fact.initseeddata(MrMsCat)
-        fact.initseeddata(GenderCat)
-        fact.initseeddata(TitleCat)
+        mock = mocking.Mocker(fact)
+        mock.create_seeddata("catseeds.json")
+        cls.Mck = mock
         cls.Mpf = fact
 
     @classmethod
