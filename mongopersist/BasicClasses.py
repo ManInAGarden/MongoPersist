@@ -22,12 +22,54 @@ class ClassDictEntry(object):
     def __repr__(self):
         return "datamember: {} dectype{} declared {}".format(self._membername, self._dectype, self._declaration)
 
-class BaseType(object):
+class OperationStackElement(object):
+    def __init__(self, left, op, right):
+        self._left = left
+        self._right = right
+        self._op = op
+
+    def __and__(self, other):
+        return OperationStackElement(self, "&", other)
+
+    def __or__(self, other):
+        return OperationStackElement(self, "|", other)
+
+    def __eq__(self, other):
+        return OperationStackElement(self, "==", other)
+
+    def __neq__(self, other):
+        return OperationStackElement(self, "!=", other)
+
+    def __str__(self):
+        return "op " + str(self._left) + self._op + str(self._right)
+
+class BaseComparableType(object):
+    def __init__(self):
+        pass
+
+    def __eq__(self, other):
+        return OperationStackElement(self, "==", other)
+
+    def __neq__(self, other):
+        return OperationStackElement(self, "!=", other)
+
+    def __lt__(self, other):
+        return OperationStackElement(self, "<", other)
+
+    def __gt__(self, other):
+        return OperationStackElement(self, ">", other)
+
+class Val(BaseComparableType):
+    def __init__(self, value):
+        self._value = value
+
+class BaseType(BaseComparableType):
     _innertype = None
     _subclasses = []
     _myfieldname = None #used to cache a field name once it was searched by get_fieldname()
 
     def __init__(self, **kwarg):
+        super().__init__()
         self._varcode = uuid.uuid4()
         self._getpara(kwarg, "default")
         self._getpara(kwarg, "defaultgenerator")
@@ -310,3 +352,6 @@ def getvarname(decl: BaseType):
                 return key
 
     return None
+
+def v(val):
+    return Val(val)

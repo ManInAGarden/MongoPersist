@@ -1,4 +1,4 @@
-from mongopersist.BasicClasses import BaseType, Catalog, ClassDictEntry, EmbeddedList, EmbeddedObject, JoinedEmbeddedList, JoinedEmbeddedObject, MpBase, MpCatalog, String
+from mongopersist.BasicClasses import BaseType, Catalog, ClassDictEntry, EmbeddedList, EmbeddedObject, JoinedEmbeddedList, JoinedEmbeddedObject, MpBase, MpCatalog, OperationStackElement, String, Val, getvarname
 import pymongo as pym
 from bson import codec_options
 import datetime as dt
@@ -324,3 +324,86 @@ class MpFactory(object):
             setattr(dco, fieldname, self.get_joined_embeddedobject(fielddecl, dco, inresolve=True))
         else:
             raise Exception("<{}> is not a resolvable field".format(fieldname))
+
+    
+class MpQueryIterator(object):
+    def __init__(self, mpq):
+        self._mpq = mpq
+        self._datalist = None
+        self._index = 0
+
+    def __next__(self):
+        if self._datalist is None:
+            self._datalist = self._mpq.finddata()
+        
+        if self._index >= len(self._datalist):
+            raise StopIteration
+
+        nextv = self._datalist[self._index]
+        self._index += 1
+        return nextv
+        
+
+class MpQuery(object):
+    opmapping = {"==":"$eq", 
+            "!=":"$neq",
+            ">":"$gt",
+            "<":"$lt",
+            ">=":"$gte",
+            "<=":"$lte"}
+    logmapping = {"&":"$and",
+            "|":"$or"}
+
+    def __init__(self, fact : MpFactory, cls : MpBase):
+        self._mpf = fact
+        self._cls = cls
+        self._opstack = []
+
+    def where(self, express):
+        self._opstack.append(express)
+        return self
+
+    def finddata(self):
+        qdict = self._generatedict()
+        return self._mpf.find(self._cls, qdict)
+
+    def _generatedict(self):
+        answ = self._getquerydict(self._opstack[0])
+        return answ
+
+    def _getquerydict(self, op):
+        leftpart = self._getpart(op._left)
+        rightpart = self._getpart(op._right)
+        oppart = self._getop(op._op)
+
+        if oppart in ["$and", "$or"]:
+            return {oppart:[leftpart, rightpart]}
+        elif oppart in self.opmapping.values():
+            return {leftpart:{oppart: rightpart}}
+        else:
+            raise Exception("Uuuuuups in _getquerydict")
+        
+    def _getop(self, op):
+        mapping = {**self.opmapping, **self.logmapping} #merge mappings
+        
+        if not op in mapping.keys():
+            raise Exception("Unknown operator <{}>".format(op))
+
+        return mapping[op]
+
+    def _getpart(self, part):
+        t = type(part)
+        if t is OperationStackElement:
+            part = self._getquerydict(part)
+        elif issubclass(t, BaseType):
+            part = getvarname(part)
+        elif t is Val:
+            part = part._value
+        else:
+            raise Exception("Unknown type in _addict while creating querydict")
+
+        return part
+
+    def __iter__(self):
+       ''' Returns the Iterator object '''
+       return MpQueryIterator(self)
