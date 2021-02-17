@@ -1,4 +1,4 @@
-from mongopersist.BasicClasses import BaseType, Catalog, ClassDictEntry, EmbeddedList, EmbeddedObject, JoinedEmbeddedList, JoinedEmbeddedObject, MpBase, MpCatalog, OperationStackElement, String, Val, getvarname
+from mongopersist.BasicClasses import BaseType, Catalog, ClassDictEntry, EmbeddedList, EmbeddedObject, JoinedEmbeddedList, JoinedEmbeddedObject, MpBase, MpCatalog, OperationStackElement, OrderInfo, String, Val, getvarname
 import pymongo as pym
 from bson import codec_options
 import datetime as dt
@@ -165,11 +165,11 @@ class MpFactory(object):
         delres = col.delete_one({"_id" : dco._id})
 
 
-    def find(self, cls, findpar = None, limit=0):
+    def find(self, cls, findpar = None, orderlist=None, limit=0):
         if findpar is None:
-            return self.find_with_dict(cls, {}, limit)
+            return self.find_with_dict(cls, {}, orderlist, limit)
         elif type(findpar) is dict:
-            return self.find_with_dict(cls, findpar, limit)
+            return self.find_with_dict(cls, findpar,  orderlist, limit)
         elif issubclass(type(findpar), MpBase):
             if findpar._id is None:
                 raise Exception("MpFactory.find() with an Mpbase derived instance only works when this instance contains an _id")
@@ -187,10 +187,14 @@ class MpFactory(object):
         if len(inl) <= 0: return default
         return inl[0]
 
-    def find_with_dict(self, cls, filterdict : dict, limit=0) -> list:
+    def find_with_dict(self, cls, filterdict : dict, orderlist=None, limit=0) -> list:
         colname = cls.get_collection_name()
         col = self._db.get_collection(colname)
-        dcodict = col.find(filterdict, limit = limit)
+
+        if orderlist is None or len(orderlist) <= 0:
+            dcodict = col.find(filterdict, limit = limit)
+        else:
+            dcodict = col.find(filterdict, limit = limit).sort(orderlist)
 
         answ = []
         if dcodict is not None:
@@ -342,7 +346,50 @@ class MpQueryIterator(object):
         nextv = self._datalist[self._index]
         self._index += 1
         return nextv
-        
+
+    def first_or_default(self, default):
+        """get first element of the iteration or a default value when nothing can be found
+
+           When no result can be found the default is returned
+           instead.
+
+           parameters
+           ----------
+
+           default: a default which will be returned instead of raising an exception in case no
+           results can be found
+
+           Returns
+           -------
+
+           The first element of the query result
+        """
+
+        if self._datalist is None:
+            self._datalist = self._mpq.finddata()
+
+        if len(self._datalist) <= 0:
+                return default
+
+        return self._datalist[0]
+
+    def first(self):
+        """get first element of the iterator
+
+           When no result can be found an exception is raised
+
+           Returns
+           -------
+
+           The first element of the query result
+        """
+        if self._datalist is None:
+            self._datalist = self._mpq.finddata()
+
+        if len(self._datalist) <= 0:
+            raise Exception("No results where found")
+
+        return self._datalist[0]
 
 class MpQuery(object):
     opmapping = {"==":"$eq", 
@@ -357,21 +404,98 @@ class MpQuery(object):
     def __init__(self, fact : MpFactory, cls : MpBase):
         self._mpf = fact
         self._cls = cls
-        self._opstack = []
+        self._whereop = None
+        self._order = None
 
-    def where(self, express):
-        self._opstack.append(express)
+    def where(self, express = None):
+        self._whereop = express
+        return self
+
+    def first_or_default(self, default):
+        """get first element of the query result
+
+           When no result can be foudn the default is returned
+           instead.
+
+           parameters
+           ----------
+
+           default: a default which will be returned instead of raising an exception in case no
+           results can be found
+
+           Returns
+           -------
+
+           The first element of the query result
+        """
+        it = iter(self)
+        return it.first_or_default(default)
+
+    def first(self):
+        """get first element of the query result
+
+           When no result can be found an exception is raised
+
+           Returns
+           -------
+
+           The first element of the query result
+        """
+        it = iter(self)
+        return it.first()
+
+    def order_by(self, *args):
+        self._order = []
+
+        for arg in args:
+            tolm = type(arg)
+
+            if issubclass(tolm, BaseType):
+                oi = OrderInfo(arg, "asc")
+            elif tolm is OrderInfo:
+                oi = arg
+
+            self._order.append(oi)
+
         return self
 
     def finddata(self):
-        qdict = self._generatedict()
-        return self._mpf.find(self._cls, qdict)
+        qdict, orderlist = self._generateall()
+        return self._mpf.find(self._cls, qdict, orderlist)
 
-    def _generatedict(self):
-        answ = self._getquerydict(self._opstack[0])
+    def _generateall(self):
+        qdict = self._getquerydict(self._whereop)
+        orderl = self._generateorderlist(self._order)
+        return qdict, orderl
+
+    def _generateorderlist(self, ol):
+        if ol is None: return None
+        if len(ol) <= 0: return None
+
+        answ = []
+        for olm in ol:
+            answ.append(self._getorder(olm))
+
         return answ
 
+    def _getorder(self, olm):
+        field = olm.field
+        if olm.orderdir == "asc":
+            dir = pym.ASCENDING
+        elif olm.orderdir == "desc":
+            dir = pym.DESCENDING
+        else:
+            raise Exception("Unknown ordering direction <{}> in _getorder()".format(olm._order))
+
+        fieldname = getvarname(field)
+        return (fieldname, dir)
+
+        
+
     def _getquerydict(self, op):
+        if op is None:
+            return {} #no query supplied -> query all
+
         leftpart = self._getpart(op._left)
         rightpart = self._getpart(op._right)
         oppart = self._getop(op._op)
@@ -399,8 +523,6 @@ class MpQuery(object):
             part = getvarname(part)
         elif t is Val:
             part = part._value
-        else:
-            raise Exception("Unknown type in _addict while creating querydict")
 
         return part
 

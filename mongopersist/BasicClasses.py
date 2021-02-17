@@ -63,6 +63,11 @@ class Val(BaseComparableType):
     def __init__(self, value):
         self._value = value
 
+class OrderInfo(object):
+    def __init__(self, field, direction : str):
+        self.field = field
+        self.orderdir = direction
+
 class BaseType(BaseComparableType):
     _innertype = None
     _subclasses = []
@@ -105,6 +110,12 @@ class BaseType(BaseComparableType):
 
         if not done:
             setattr(self, membername, None)
+
+    def desc(self):
+        return OrderInfo(self, "desc")
+
+    def asc(self):
+        return OrderInfo(self, "asc")
 
 class String(BaseType):
     _innertype = str
