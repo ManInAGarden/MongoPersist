@@ -123,11 +123,173 @@ class CrudTest(TestBase):
             self.assertGreaterEqual(p.birthday, balt)
             balt = p.birthday
 
-        quer = MpQuery(self.Mpf, MpPerson).where().order_by(MpPerson.Lastname.desc())
+        quer = MpQuery(self.Mpf, MpPerson).where().order_by(MpPerson.Lastname.desc()) #descending ordering
         nalt = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
         for p in quer:
             self.assertLessEqual(p.lastname, nalt)
             nalt = p.lastname
+
+    def test_select(self):
+        p1 = self.Mck.create_person(
+                     firstname="Klaus", lastname="Kleber",
+                     birthday=dt.datetime(1988,6,25),
+                     gender = self.Mpf.cat(GenderCat, "MALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MR"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 112"),
+                     labels=["3D-printing", "italian wine"])
+        p2 = self.Mck.create_person(
+                     firstname="Gundula", lastname="Gause",
+                     birthday=dt.datetime(1960,3,30),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 112"),
+                     labels=["3D-printing", "french wine"])
+        p3 = self.Mck.create_person(
+                     firstname="Linda", lastname="Zervakis",
+                     birthday=dt.datetime(1975,5,17),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 112"),
+                     labels=["3D-printing", "italian wine"])
+        p4 = self.Mck.create_person(
+                     firstname="Karen", lastname="Miosga",
+                     birthday=dt.datetime(1970,2,28),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 112"),
+                     labels=["3D-printing", "french wine"])
+
+        quer = MpQuery(self.Mpf, MpPerson).where(MpPerson.Gender=="FEMALE").select(lambda p:(p.lastname, p.firstname))
+        accept = [("Gause", "Gundula"), ("Miosga","Karen"), ("Zervakis","Linda")]
+        for item in quer:
+            self.assertTrue(item in accept)
+
+    def test_subitem_where(self):
+        p1 = self.Mck.create_person(
+                     firstname="Klaus", lastname="Kleber",
+                     birthday=dt.datetime(1988,6,25),
+                     gender = self.Mpf.cat(GenderCat, "MALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MR"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Gartenweg 18"),
+                     labels=["3D-printing", "italian wine"])
+        p2 = self.Mck.create_person(
+                     firstname="Gundula", lastname="Gause",
+                     birthday=dt.datetime(1960,3,30),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 112"),
+                     labels=["3D-printing", "french wine"])
+        p3 = self.Mck.create_person(
+                     firstname="Linda", lastname="Zervakis",
+                     birthday=dt.datetime(1975,5,17),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 113"),
+                     labels=["3D-printing", "italian wine"])
+        p4 = self.Mck.create_person(
+                     firstname="Karen", lastname="Miosga",
+                     birthday=dt.datetime(1970,2,28),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Vogelheimer Str. 12"),
+                     labels=["3D-printing", "french wine"])
+
+        for p in MpQuery(self.Mpf, MpPerson).where(MpPerson.Address.sub(MpAddress.StreetAddress)=="Altenessener Str. 112"):
+            self.assertEqual(p.address.streetaddress, "Altenessener Str. 112")
+
+    def test_isin(self):
+        p1 = self.Mck.create_person(
+                     firstname="Klaus", lastname="Kleber",
+                     birthday=dt.datetime(1988,6,25),
+                     gender = self.Mpf.cat(GenderCat, "MALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MR"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Gartenweg 18"),
+                     labels=["3D-printing", "italian wine"])
+        p2 = self.Mck.create_person(
+                     firstname="Gundula", lastname="Gause",
+                     birthday=dt.datetime(1960,3,30),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 112"),
+                     labels=["3D-printing", "french wine"])
+        p3 = self.Mck.create_person(
+                     firstname="Linda", lastname="Zervakis",
+                     birthday=dt.datetime(1975,5,17),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 113"),
+                     labels=["3D-printing", "italian wine"])
+        p4 = self.Mck.create_person(
+                     firstname="Karen", lastname="Miosga",
+                     birthday=dt.datetime(1970,2,28),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Vogelheimer Str. 12"),
+                     labels=["3D-printing", "french wine"])
+
+        quer = MpQuery(self.Mpf,MpPerson).where(MpPerson.Gender.isin(["MALE","FEMALE"]))
+        malect = 0
+        femalect = 0
+        for p in quer:
+            if p.gender.code == "MALE": malect+=1
+            elif p.gender.code=="FEMALE": femalect+=1
+
+        self.assertGreater(malect, 0)
+        self.assertGreater(femalect, 0)
+
+        quer = MpQuery(self.Mpf,MpPerson).where(MpPerson.Firstname.isin(["Linda","Karen"]) & MpPerson.Gender.isin(["MALE","FEMALE"]))
+        for p in quer:
+            self.assertTrue(p.firstname in ["Karen", "Linda"])
+
+    def test_regex(self):
+        p1 = self.Mck.create_person(
+                     firstname="Klaus", lastname="Kleber",
+                     birthday=dt.datetime(1988,6,25),
+                     gender = self.Mpf.cat(GenderCat, "MALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MR"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Gartenweg 18"),
+                     labels=["3D-printing", "italian wine"])
+        p2 = self.Mck.create_person(
+                     firstname="Gundula", lastname="Gause",
+                     birthday=dt.datetime(1960,3,30),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 112"),
+                     labels=["3D-printing", "french wine"])
+        p3 = self.Mck.create_person(
+                     firstname="Linda", lastname="Zervakis",
+                     birthday=dt.datetime(1975,5,17),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 113"),
+                     labels=["3D-printing", "italian wine"])
+        p4 = self.Mck.create_person(
+                     firstname="Karen", lastname="Miosga",
+                     birthday=dt.datetime(1970,2,28),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Vogelheimer Str. 12"),
+                     labels=["3D-printing", "french wine"])
+
+        quer = MpQuery(self.Mpf,MpPerson).where(MpPerson.Firstname.regex("^L"))
+
+        for p in quer:
+            self.assertEqual(p.firstname[0], "L")
+
+        quer = MpQuery(self.Mpf,MpPerson).where(MpPerson.Firstname.regex("^a"))
+
+        for p in quer:
+            lidx = len(p.firstname) - 1
+            self.assertEqual(p.firstname[lidx], "a")
+
+        quer = MpQuery(self.Mpf,MpPerson).where(MpPerson.Address.sub(MpAddress.StreetAddress).regex(".Str."))
+        ct = 0
+        for p in quer:
+            self.assertIn("Str", p.address.streetaddress)
+            ct += 1
+            
+        self.assertEqual(ct, 3)
+
 
 if __name__ == '__main__':
     unittest.main()

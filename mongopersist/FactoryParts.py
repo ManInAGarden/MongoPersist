@@ -1,4 +1,4 @@
-from mongopersist.BasicClasses import BaseType, Catalog, ClassDictEntry, EmbeddedList, EmbeddedObject, JoinedEmbeddedList, JoinedEmbeddedObject, MpBase, MpCatalog, OperationStackElement, OrderInfo, String, Val, getvarname
+from mongopersist.BasicClasses import BaseType, Catalog, ClassDictEntry, EmbeddedList, EmbeddedObject, JoinedEmbeddedList, JoinedEmbeddedObject, MpBase, MpCatalog, OperationStackElement, OrderInfo, SpecialWhereInfo, String, Val, getvarname, getsubedvarname
 import pymongo as pym
 from bson import codec_options
 import datetime as dt
@@ -344,6 +344,10 @@ class MpQueryIterator(object):
             raise StopIteration
 
         nextv = self._datalist[self._index]
+
+        if self._mpq._selfunc is not None:
+            nextv = self._mpq._selfunc(nextv)
+
         self._index += 1
         return nextv
 
@@ -400,15 +404,22 @@ class MpQuery(object):
             "<=":"$lte"}
     logmapping = {"&":"$and",
             "|":"$or"}
+    specsmapping = {"ISIN":"$in",
+        "NOTISIN":"$nin",
+        "REGEX": "$regex"}
 
     def __init__(self, fact : MpFactory, cls : MpBase):
         self._mpf = fact
         self._cls = cls
         self._whereop = None
         self._order = None
+        self._selfunc = None
 
     def where(self, express = None):
-        self._whereop = express
+        if issubclass(type(express), SpecialWhereInfo):
+            self._whereop = OperationStackElement(express.get_left(), express.get_op(), express.get_right())
+        else:
+            self._whereop = express
         return self
 
     def first_or_default(self, default):
@@ -459,6 +470,10 @@ class MpQuery(object):
 
         return self
 
+    def select(self, selfunc):
+        self._selfunc = selfunc
+        return self
+
     def finddata(self):
         qdict, orderlist = self._generateall()
         return self._mpf.find(self._cls, qdict, orderlist)
@@ -500,15 +515,17 @@ class MpQuery(object):
         rightpart = self._getpart(op._right)
         oppart = self._getop(op._op)
 
-        if oppart in ["$and", "$or"]:
+        if oppart in self.logmapping.values():
             return {oppart:[leftpart, rightpart]}
         elif oppart in self.opmapping.values():
+            return {leftpart:{oppart: rightpart}}
+        elif oppart in self.specsmapping.values():
             return {leftpart:{oppart: rightpart}}
         else:
             raise Exception("Uuuuuups in _getquerydict")
         
     def _getop(self, op):
-        mapping = {**self.opmapping, **self.logmapping} #merge mappings
+        mapping = {**self.opmapping, **self.logmapping, **self.specsmapping} #merge mappings
         
         if not op in mapping.keys():
             raise Exception("Unknown operator <{}>".format(op))
@@ -520,11 +537,40 @@ class MpQuery(object):
         if t is OperationStackElement:
             part = self._getquerydict(part)
         elif issubclass(t, BaseType):
-            part = getvarname(part)
+            part = getsubedvarname(part)
         elif t is Val:
             part = part._value
+        elif issubclass(t, SpecialWhereInfo):
+            part = self._getspecialdict(part)
 
         return part
+
+    def _getspecialdict(self, part):
+        if part is None:
+            return {} #no query supplied -> query all
+
+        leftpart = part.get_left()
+        rightpart = part.get_right()
+        oppart = part.get_op()
+        oppart = self._get_special_op(oppart)
+
+        if issubclass(type(leftpart), BaseType):
+            leftpart = getsubedvarname(leftpart)
+
+        if issubclass(type(rightpart), BaseType):
+            rightpart = getsubedvarname(rightpart)
+
+        if oppart in self.specsmapping.values():
+            return {leftpart:{oppart: rightpart}}
+        else:
+            raise Exception("Uuuuuups in _getspecialdict")
+
+    def _get_special_op(self, oppart):
+        if not oppart in self.specsmapping.keys():
+            raise Exception("Special opration <{}> not supported in _get_special_op()".format(oppart))
+
+        return self.specsmapping[oppart]
+
 
     def __iter__(self):
        ''' Returns the Iterator object '''

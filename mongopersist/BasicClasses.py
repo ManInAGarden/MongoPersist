@@ -56,8 +56,14 @@ class BaseComparableType(object):
     def __lt__(self, other):
         return OperationStackElement(self, "<", other)
 
+    def __le__(self, other):
+        return OperationStackElement(self, "<=", other)
+
     def __gt__(self, other):
         return OperationStackElement(self, ">", other)
+
+    def __ge__(self, other):
+        return OperationStackElement(self, ">=", other)
 
 class Val(BaseComparableType):
     def __init__(self, value):
@@ -68,6 +74,39 @@ class OrderInfo(object):
         self.field = field
         self.orderdir = direction
 
+class SpecialWhereInfo(object):
+    def __init__(self, field, infotype, infodata):
+        self._field = field
+        self._infotype = infotype
+        self._infodata = infodata
+
+    def __and__(self, other):
+        return OperationStackElement(self, "&", other)
+
+    def __or__(self, other):
+        return OperationStackElement(self, "|", other)
+
+    def get_left(self):
+        return self._field
+
+    def get_right(self):
+        return self._infodata
+
+    def get_op(self):
+        return self._infotype
+
+class IsIn(SpecialWhereInfo):
+    def __init__(self, field, infodata):
+        super().__init__(field, infotype="ISIN", infodata=infodata)
+
+class NotIsIn(SpecialWhereInfo):
+    def __init__(self, field, infodata):
+        super().__init__(field, infotype="ENDSWITH", infodata=infodata)
+
+class Regex(SpecialWhereInfo):
+    def __init__(self, field, infodata):
+        super().__init__(field, infotype="REGEX", infodata=infodata)
+
 class BaseType(BaseComparableType):
     _innertype = None
     _subclasses = []
@@ -75,6 +114,7 @@ class BaseType(BaseComparableType):
 
     def __init__(self, **kwarg):
         super().__init__()
+        self._subdef = None
         self._varcode = uuid.uuid4()
         self._getpara(kwarg, "default")
         self._getpara(kwarg, "defaultgenerator")
@@ -116,6 +156,19 @@ class BaseType(BaseComparableType):
 
     def asc(self):
         return OrderInfo(self, "asc")
+
+    def sub(self, subdef):
+        self._subdef = subdef
+        return self
+
+    def isin(self, subdata):
+        return IsIn(self, subdata)
+
+    def notisin(self, subdata):
+        return NotIsIn(self, subdata)
+
+    def regex(self, subdata):
+        return Regex(self, subdata)
 
 class String(BaseType):
     _innertype = str
@@ -363,6 +416,16 @@ def getvarname(decl: BaseType):
                 return key
 
     return None
+
+def getsubedvarname(decl: BaseType):
+    """get the varname with dots when subnames are given or simply like getvarname when there are no subs
+    """
+
+    if decl._subdef is None:
+        return getvarname(decl)
+    else:
+        return getvarname(decl) + "." + getsubedvarname(decl._subdef)
+
 
 def v(val):
     return Val(val)
