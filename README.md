@@ -170,3 +170,22 @@ Looking at the data in testco with the python debugger stopped right behind that
     fact.resolve(testco, MpCompany.Employees)
 
 After that we find all the employees in testco.employees.
+
+## Finding data the easy way
+
+Finding data by writing down the search criteria in form of a dictionary can produce a lot of errors because nothing helps us to use the correct spelling for the field names. That's why we can also *find* data in a more sophisticated way.
+
+Try this:
+
+    comp = MpQuery(fact, MpCompany).where(MpCompany.Name.regex("^testco").orderby(MpCompanyName).first()
+
+Read it from left to right. Here we define a query operating the factory and the class *MpCompany*. The where produces an iterable object which is prepared to issue a find-operartion on the database. This is not done right now because the *orderby* after that adds ordering to the database find. At last we have a first which tries to get the first element of that iterable. Only now the find is executed so that first can return the first company retrieved from the database with a name matching the given regex (name should start with the letter *t*).
+
+Or try this:
+
+    q = MpQuery(fact, MpEmpoyee).where(employeenumber >5)
+
+    for emp in q:
+        print(emp.employeenumber, emp.person.firstname, emp.person.lastname)
+
+Here we do not use first to get the first the employee. So we can iterate over the query *q* to get all the employees one by one and print some of their attributes. Note that we can directly uses the person data because here we have *autofill=True* for the field *Person*.
