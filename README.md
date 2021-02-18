@@ -183,9 +183,9 @@ Read it from left to right. Here we define a query operating the factory and the
 
 Or try this:
 
-    q = MpQuery(fact, MpEmpoyee).where(employeenumber >5)
+    q = MpQuery(fact, MpEmpoyee).where(employeenumber > 5)
 
     for emp in q:
         print(emp.employeenumber, emp.person.firstname, emp.person.lastname)
 
-Here we do not use first to get the first the employee. So we can iterate over the query *q* to get all the employees one by one and print some of their attributes. Note that we can directly uses the person data because here we have *autofill=True* for the field *Person*.
+Here we do not use *first()* to get the first  employee. We get an iterable in *q* which can be iteraded ober all the employess with an employee-number greater than 5. So we can iterate over the query *q* to get all the employees one by one and print some of their attributes. Note that we can directly uses the person data because here we have *autofill=True* for the field *Person*.
