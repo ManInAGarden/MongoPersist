@@ -272,12 +272,10 @@ class CrudTest(TestBase):
                      labels=["3D-printing", "french wine"])
 
         quer = MpQuery(self.Mpf,MpPerson).where(MpPerson.Firstname.regex("^L"))
-
         for p in quer:
             self.assertEqual(p.firstname[0], "L")
 
         quer = MpQuery(self.Mpf,MpPerson).where(MpPerson.Firstname.regex("^a"))
-
         for p in quer:
             lidx = len(p.firstname) - 1
             self.assertEqual(p.firstname[lidx], "a")
@@ -287,7 +285,7 @@ class CrudTest(TestBase):
         for p in quer:
             self.assertIn("Str", p.address.streetaddress)
             ct += 1
-            
+
         self.assertEqual(ct, 3)
 
 
