@@ -33,6 +33,7 @@ With that definition we can create a person now.
     pers.adr_street = "123 Times Square"
     pers.adr_city = "New York"
     ....
+
 Note that we are using small letters as the first letters for the member names in the person instance here!
 
 Now we store that person in our mongodb
@@ -68,13 +69,13 @@ Life most of the time is'nt as easy as in the tiny tutorial above. Real data are
 
 Lets try to store company data in a mongodb. We could have hour company data like this:
 
-class MpAddress(mp.MpBase):
-    """class used for defining and storing addresses
-    """
-    Zip = mp.String()
-    City = mp.String()
-    StreetAddress = mp.String()
-    Co = mp.String()
+    class MpAddress(mp.MpBase):
+        """class used for defining and storing addresses
+        """
+        Zip = mp.String()
+        City = mp.String()
+        StreetAddress = mp.String()
+        Co = mp.String()
 
     class MpPerson(mp.MpBase):
         Id = mp.String()
