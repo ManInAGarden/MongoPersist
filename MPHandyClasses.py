@@ -34,6 +34,7 @@ class MpEmployee(mp.MpBase):
     Companyid = mp.String()
     Personid = mp.String()
     Person = mp.JoinedEmbeddedObject(targettype=MpPerson, localid=Personid, autofill=True)
+    Isfixed = mp.Boolean()
 
 class MpCompany(mp.MpBase):
     Name = mp.String()

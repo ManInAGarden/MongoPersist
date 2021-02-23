@@ -77,6 +77,21 @@ class CrudTest(TestBase):
         for employee in comp.employees:
             self.assertIsNone(self.Mpf.find(MpEmployee, employee)) #this is deleted by cascade
             self.assertIsNotNone(self.Mpf.find(MpPerson, employee.person)) #but not down to the person
+            self.assertIsNone(employee.isfixed)
+
+    def test_booleans(self):
+        comp = self.Mck.create_company("Murks & Co", 3)
+        self.Mpf.resolve(comp, MpCompany.Employees)
+        for employee in comp.employees:
+            employee.isfixed = True
+            self.Mpf.flush(employee)
+
+        compr = self.Mpf.find(MpCompany, comp)
+        self.Mpf.resolve(compr, MpCompany.Employees)
+        
+        for employee in compr.employees:
+            self.assertTrue(employee.isfixed)
+            self.assertIsNotNone(employee.personid)
 
 
 

@@ -230,6 +230,29 @@ class Float(BaseType):
         else:
             raise Exception("Type <{0}> cannot be tranformed into a float".format(t.__name__))
 
+class Boolean(BaseType):
+    _innertype = bool
+
+    def to_innertype(self, dta):
+        if dta is None:
+            return None
+        t = type(dta)
+
+        if t is bool:
+            return dta
+        elif t is str:
+            lowdta = dta.lower()
+            if lowdta in ["ja", "yes", "wahr", "true", "y", "1"]:
+                return True
+            elif lowdta in ["nein", "no", "unwahr", "false", "n", "0"]:
+                return False
+            else:
+                raise Exception("The string <{}> cannot be transformed to a bool".format(dta))
+        elif t is int:
+            return dta == 1
+        else:
+            raise Exception("Type <{0}> cannot be tranformed into a bool".format(t.__name__))
+
 class DateTime(BaseType):
     innertype = dt.datetime
 
@@ -357,7 +380,7 @@ class MpBase(object):
                         else:
                             mykey = key.lower()
 
-                        classmemberdict[mykey] = ClassDictEntry(key, value, getattr(allclass, key))
+                        classmemberdict[mykey] = ClassDictEntry(key, type(value), getattr(allclass, key))
         
         cls._classdict[cls] = classmemberdict
 

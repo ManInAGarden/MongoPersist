@@ -1,4 +1,4 @@
-from mongopersist.BasicClasses import BaseType, Catalog, ClassDictEntry, EmbeddedList, EmbeddedObject, JoinedEmbeddedList, JoinedEmbeddedObject, MpBase, MpCatalog, OperationStackElement, OrderInfo, SpecialWhereInfo, String, Val, getvarname, getsubedvarname
+from mongopersist.BasicClasses import BaseType, Catalog, ClassDictEntry, EmbeddedList, EmbeddedObject, IntersectedList, JoinedEmbeddedList, JoinedEmbeddedObject, MpBase, MpCatalog, OperationStackElement, OrderInfo, SpecialWhereInfo, String, Val, getvarname, getsubedvarname
 import pymongo as pym
 from bson import codec_options
 import datetime as dt
@@ -82,7 +82,9 @@ class MpFactory(object):
         mongdict = {}
         membdict = dco._get_my_memberdict()
         for membkey, membval in membdict.items():
-            mongdict[membkey] = self._get_value(membval, getattr(dco, membkey))
+            dect = membval.get_dectype()
+            if not (dect in [JoinedEmbeddedObject, JoinedEmbeddedList, IntersectedList]):
+                mongdict[membkey] = self._get_value(membval, getattr(dco, membkey))
 
         return mongdict
 
