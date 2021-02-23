@@ -214,7 +214,29 @@ So this would work:
 
     q = = MpQuery(fact, MpEmpoyee).where((MPEmployee.Employeenumber > 5) & (MpEmployee.Jobtitle="assistant"))
 
-Note that we also need additional parantheses because operator precedence of the bitwise operations is different from the logical operations. Not very beautiful but it works.
+Note that we also need additional parantheses because operator precedence of the bitwise operations is different from the logical operations. Not good looking and not like it should be in python but it works.
+
+### Additional information
+Why do we use this ugly way of defining conditions for selecting a document from the database? Why don't we just write something like using lambda expressions:
+
+q = MpQuery(fact, MpMpEmployee).where(emp : emp.employeenumber > 5 and emp.jobtitle="assistant")
+
+Her ew also have the advantage that we can use intelligent editing and syntax checking with pylint or something like that. We also have the big advantage that we can write down the conditions for a selection in real python.
+
+The answer is that there is one big disadvantage. In oder to write it like that we also would have to make the python interpreter work on the database records. That means we would have to get all the data from the database (here all employee documents) and then iterator over them to have the lambda expression execute on each document. That is at least a very big drawback in performance. With big data it would even be impossible to it like this.
+
+With our version of where, the expression is translated to a quuery dictionary and then applied on the database with a find-statement. This makes the datbase select the data and return only those documents which fulfill the query. Even when you add an order_by like in
+
+    q = MpQuery(fact, MpEmpoyee).where((MPEmployee.Employeenumber > 5) & (MpEmployee.Jobtitle="assistant")).order_by(MpEmployee.Lastname)
+
+also the ordering is carried out by the database. This is because the actual find is carried out only when it is needed. In the above statement on it's own the database won't be addressed. But when you force to iterate over the data in some way the databse will be addressed in advance. Like in
+
+    .first()
+
+or
+
+    for emp in q:
+        dosomethingwith(p)
 
 ## Special functions
 
@@ -233,4 +255,4 @@ like isin but negated.
 ...where(MpPerson.Firstname.regex("y$"))
 will get you all the persons with a first name ending with the letter *y*
 
-* sub()
+* sub() address subfields ...where(MpPerson.Address.sub(MpAddress.zip))=="BL-247567") selects persons with an adress (embedded object of type MpAddress) with a zip code of "BL-247567".
