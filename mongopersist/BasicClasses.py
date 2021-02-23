@@ -86,6 +86,9 @@ class SpecialWhereInfo(object):
     def __or__(self, other):
         return OperationStackElement(self, "|", other)
 
+    def __invert__(self):
+        return OperationStackElement(None, "~", self)
+
     def get_left(self):
         return self._field
 
@@ -101,7 +104,7 @@ class IsIn(SpecialWhereInfo):
 
 class NotIsIn(SpecialWhereInfo):
     def __init__(self, field, infodata):
-        super().__init__(field, infotype="ENDSWITH", infodata=infodata)
+        super().__init__(field, infotype="NOTISIN", infodata=infodata)
 
 class Regex(SpecialWhereInfo):
     def __init__(self, field, infodata):

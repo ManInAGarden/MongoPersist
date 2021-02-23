@@ -403,7 +403,8 @@ class MpQuery(object):
             ">=":"$gte",
             "<=":"$lte"}
     logmapping = {"&":"$and",
-            "|":"$or"}
+            "|":"$or",
+            "~" : "$not"}
     specsmapping = {"ISIN":"$in",
         "NOTISIN":"$nin",
         "REGEX": "$regex"}
@@ -516,7 +517,10 @@ class MpQuery(object):
         oppart = self._getop(op._op)
 
         if oppart in self.logmapping.values():
-            return {oppart:[leftpart, rightpart]}
+            if oppart != "$not":
+                return {oppart:[leftpart, rightpart]}
+            else:
+                return self._notted(rightpart)
         elif oppart in self.opmapping.values():
             return {leftpart:{oppart: rightpart}}
         elif oppart in self.specsmapping.values():
@@ -524,6 +528,16 @@ class MpQuery(object):
         else:
             raise Exception("Uuuuuups in _getquerydict")
         
+    def _notted(self, rdict):
+        if not type(rdict) is dict:
+            raise Exception("Expected dictionary in _notted() but received {}".format(type(rdict).__name__))
+
+        if len(rdict)!=1:
+            raise Exception("Expected dictionary of len 1 in _notted() but received len {}".format(len(rdict)))
+        
+        for key, val in rdict.items():
+            return {key : {"$not" : val}}
+
     def _getop(self, op):
         mapping = {**self.opmapping, **self.logmapping, **self.specsmapping} #merge mappings
         

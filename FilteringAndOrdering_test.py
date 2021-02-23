@@ -288,6 +288,58 @@ class CrudTest(TestBase):
 
         self.assertEqual(ct, 3)
 
+    def test_negation(self):
+        p1 = self.Mck.create_person(
+                     firstname="Klaus", lastname="Kleber",
+                     birthday=dt.datetime(1988,6,25),
+                     gender = self.Mpf.cat(GenderCat, "MALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MR"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Gartenweg 18"),
+                     labels=["3D-printing", "italian wine"])
+        p2 = self.Mck.create_person(
+                     firstname="Gundula", lastname="Gause",
+                     birthday=dt.datetime(1960,3,30),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 112"),
+                     labels=["3D-printing", "french wine"])
+        p3 = self.Mck.create_person(
+                     firstname="Linda", lastname="Zervakis",
+                     birthday=dt.datetime(1975,5,17),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Altenessener Str. 113"),
+                     labels=["3D-printing", "italian wine"])
+        p4 = self.Mck.create_person(
+                     firstname="Karen", lastname="Miosga",
+                     birthday=dt.datetime(1970,2,28),
+                     gender = self.Mpf.cat(GenderCat, "FEMALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MRS"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Vogelheimer Str. 12"),
+                     labels=["3D-printing", "french wine"])
+        p4 = self.Mck.create_person(
+                     firstname="Karl", lastname="Käfer",
+                     birthday=dt.datetime(1970,2,28),
+                     gender = self.Mpf.cat(GenderCat, "MALE"),
+                     mrms = self.Mpf.cat(MrMsCat, "MR"),
+                     address = MpAddress( zip="45329", city="Essen", streetaddress="Vogelheimer Str. 14"),
+                     labels=["german wine"])
+
+        ct = 0
+        for p in MpQuery(self.Mpf, MpPerson).where(~MpPerson.Firstname.regex("^Ka")):
+            self.assertFalse(p.firstname.startswith("Ka"))
+            ct += 1
+
+        self.assertEqual(3, ct)
+
+        ct = 0
+        forbidden = ["Käfer", "Zervakis"]
+        for p in MpQuery(self.Mpf, MpPerson).where((~MpPerson.Firstname.regex("^Ka")) & (~MpPerson.Lastname.isin(forbidden))):
+            self.assertFalse(p.firstname.startswith("Ka"))
+            ct += 1
+
+        self.assertEqual(2, ct)
+
 
 if __name__ == '__main__':
     unittest.main()

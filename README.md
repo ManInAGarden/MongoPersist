@@ -173,19 +173,64 @@ After that we find all the employees in testco.employees.
 
 ## Finding data the easy way
 
-Finding data by writing down the search criteria in form of a dictionary can produce a lot of errors because nothing helps us to use the correct spelling for the field names. That's why we can also *find* data in a more sophisticated way.
+Finding data by writing down the search criteria in form of a dictionary can produce a lot of errors because nothing helps us to use the correct spelling for the field names. We all are used to intelligent editing methods and using syntax checking while editing as much as possible.
+
+That's why we can also *find* data in a more sophisticated way.
 
 Try this:
 
-    comp = MpQuery(fact, MpCompany).where(MpCompany.Name.regex("^testco").orderby(MpCompanyName).first()
+    comp = MpQuery(fact, MpCompany).where(MpCompany.Name.regex("^t").orderby(MpCompanyName).first()
 
 Read it from left to right. Here we define a query operating the factory and the class *MpCompany*. The where produces an iterable object which is prepared to issue a find-operartion on the database. This is not done right now because the *orderby* after that adds ordering to the database find. At last we have a first which tries to get the first element of that iterable. Only now the find is executed so that first can return the first company retrieved from the database with a name matching the given regex (name should start with the letter *t*).
 
+As parameter to where we have to write an expression resultung in a true when we want the corresponding document be to be selected from the database. In that expression we can use local variables, constants and everything carriying a value in the moment the expression gets evaluated. The fields of the employee itself are adressed by trick. We use the class variables which define a field for that, like in *MpCompany.Name*. We also could have written something like:
+    
+    ...where(MpCompany.Name=="testco")
+
+which woukd have selected any company with a name equals to *testco*. Deep down in the mechanics of *where* this is transferred to a filter dictionary used in the find statement called on the database. It looks like this:
+
+    {"name":"testco"}
+
+or for the first example:
+
+    {"name":{"regex$": "^t"}}
+
 Or try this:
 
-    q = MpQuery(fact, MpEmpoyee).where(employeenumber > 5)
+    q = MpQuery(fact, MpEmpoyee).where(MPEmployee.Employeenumber > 5)
 
     for emp in q:
         print(emp.employeenumber, emp.person.firstname, emp.person.lastname)
 
-Here we do not use *first()* to get the first  employee. We get an iterable in *q* which can be iteraded ober all the employess with an employee-number greater than 5. So we can iterate over the query *q* to get all the employees one by one and print some of their attributes. Note that we can directly uses the person data because here we have *autofill=True* for the field *Person*.
+Here we do not use *first()* to get the first  employee. We get an iterable in *q* which can be iterated over all the employess with an employee-number greater than 5. So we can iterate over the query *q* to get all the employees one by one and print some of their attributes. Note that we can directly uses the person data because here we have *autofill=True* for the field *Person*.
+
+Theres on drawback to this kind of data selection with *where*. Because of python's limitiations we cannot overload logical operators like *and*, *or* and *not*. That means we found no way to make something like this possible:
+
+    q = = MpQuery(fact, MpEmpoyee).where(MPEmployee.Employeenumber > 5 and MpEmployee.Jobtitle=="assistant")
+
+Instead we have to use replacements for the logical operators which normally are used for bitwise operations. Here *and* is raplaced by "&", and *or* is replaced by "|". These operators can be overloaded and this way abused by us.
+
+So this would work:
+
+    q = = MpQuery(fact, MpEmpoyee).where((MPEmployee.Employeenumber > 5) & (MpEmployee.Jobtitle="assistant"))
+
+Note that we also need additional parantheses because operator precedence of the bitwise operations is different from the logical operations. Not very beautiful but it works.
+
+## Special functions
+
+For special data selection needs we also have special functions on the field definition class varialbles. These functions are never really executed but used for translation of filter statements.
+
+In the first example we already saw the regex special function. Here's a list of all the currently available special functions:
+
+* isin()
+...where(MpPerson.Firstname.isin(["Mary", "John"]))
+will get you all the persons with a firstname *John* or *Mary*
+
+* notisin()
+like isin but negated.
+
+* regex() Applies the given regular expression to the field.
+...where(MpPerson.Firstname.regex("y$"))
+will get you all the persons with a first name ending with the letter *y*
+
+* sub()
